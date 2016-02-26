@@ -18,9 +18,8 @@ import java.util.Map;
 
 /**
  * Reference: http://arxiv.org/pdf/1312.6229v4.pdf
- * Created by nyghtowl on 11/17/15.
  */
-public class OverFeatAccurate {
+public class OverFeat {
 
 
     private int height; // TODO paper expects 256 pixels
@@ -31,7 +30,7 @@ public class OverFeatAccurate {
     private int iterations = 90;
     // TODO extract 5 random crops (and their horizontal flips) of size 221x221 pixels and present these to the network in mini-batches of size 128
 
-    public OverFeatAccurate(int height, int width, int channels, int outputNum, long seed, int iterations) {
+    public OverFeat(int height, int width, int channels, int outputNum, long seed, int iterations) {
         this.height = height;
         this.width = width;
         this.channels = channels;
