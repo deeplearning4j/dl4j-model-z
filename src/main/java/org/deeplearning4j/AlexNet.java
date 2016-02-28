@@ -1,10 +1,7 @@
 package org.deeplearning4j;
 
 import org.deeplearning4j.nn.api.OptimizationAlgorithm;
-import org.deeplearning4j.nn.conf.GradientNormalization;
-import org.deeplearning4j.nn.conf.MultiLayerConfiguration;
-import org.deeplearning4j.nn.conf.NeuralNetConfiguration;
-import org.deeplearning4j.nn.conf.Updater;
+import org.deeplearning4j.nn.conf.*;
 import org.deeplearning4j.nn.conf.distribution.GaussianDistribution;
 import org.deeplearning4j.nn.conf.distribution.NormalDistribution;
 import org.deeplearning4j.nn.conf.layers.*;
@@ -63,15 +60,16 @@ public class AlexNet {
                 .iterations(iterations)
                 .gradientNormalization(GradientNormalization.RenormalizeL2PerLayer) // normalize to prevent vanishing or exploding gradients
                 .optimizationAlgo(OptimizationAlgorithm.STOCHASTIC_GRADIENT_DESCENT)
-                // TODO add lr_mult & decay_mult for weights and biases separately apply 1 & 1 to weights and 2 & 0 to bias
-                .learningRate(1e-3)
-                .learningRateScoreBasedDecayRate(1e-1)
+                .learningRate(1e-2)
+                .biasLearningRate(1e-2*2)
+                .learningRateDecayPolicy(LearningRatePolicy.Step)
+                .lrPolicyDecayRate(0.1)
+                .lrPolicySteps(100000)
                 .regularization(true)
                 .l2(5 * 1e-4)
                 .momentum(0.9)
                 .miniBatch(false)
-                .list(13)
-                //conv1
+                .list()
                 .layer(0, new ConvolutionLayer.Builder(new int[]{11, 11}, new int[]{4, 4}, new int[]{3, 3})
                         .name("cnn1")
                         .nIn(channels)
@@ -83,7 +81,6 @@ public class AlexNet {
                 .layer(2, new SubsamplingLayer.Builder(poolingType, new int[]{3, 3}, new int[]{2, 2})
                         .name("maxpool1")
                         .build())
-                //conv2
                 .layer(3, new ConvolutionLayer.Builder(new int[]{5, 5}, new int[]{1, 1}, new int[]{2, 2})
                         .name("cnn2")
                         .nOut(256)
@@ -96,18 +93,15 @@ public class AlexNet {
                 .layer(5, new SubsamplingLayer.Builder(poolingType, new int[]{3, 3}, new int[]{2, 2})
                         .name("maxpool2")
                         .build())
-                //conv3
                 .layer(6, new ConvolutionLayer.Builder(new int[]{3, 3}, new int[]{1, 1}, new int[]{1, 1})
                         .name("cnn3")
                         .nOut(384)
                         .build())
-                //conv4
                 .layer(7, new ConvolutionLayer.Builder(new int[]{3, 3}, new int[]{1, 1}, new int[]{1, 1})
                         .name("cnn4")
                         .nOut(384)
                         .biasInit(nonZeroBias)
                         .build())
-                //conv5
                 .layer(8, new ConvolutionLayer.Builder(new int[]{3, 3}, new int[]{1, 1}, new int[]{1, 1})
                         .name("cnn5")
                         .nOut(256)
