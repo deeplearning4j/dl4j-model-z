@@ -24,7 +24,11 @@
       <version>${dl4j.version}</version>
       <!-- <scope>provided</scope> to reduce jar file size when not doing learning -->
     </dependency>
-
+    <dependency>
+      <groupId>org.deeplearning4j</groupId>
+      <artifactId>deeplearning4j-core</artifactId>
+      <version>${dl4j.version}</version>
+    </dependency>
     <dependency>
       <groupId>junit</groupId>
       <artifactId>junit</artifactId>

@@ -1,11 +1,10 @@
 package org.deeplearning4j;
 
 import org.deeplearning4j.nn.api.OptimizationAlgorithm;
-import org.deeplearning4j.nn.conf.ComputationGraphConfiguration;
-import org.deeplearning4j.nn.conf.MultiLayerConfiguration;
-import org.deeplearning4j.nn.conf.NeuralNetConfiguration;
+import org.deeplearning4j.nn.conf.*;
 import org.deeplearning4j.nn.conf.distribution.GaussianDistribution;
 import org.deeplearning4j.nn.conf.distribution.NormalDistribution;
+import org.deeplearning4j.nn.conf.inputs.InputType;
 import org.deeplearning4j.nn.conf.layers.*;
 import org.deeplearning4j.nn.conf.layers.setup.ConvolutionLayerSetup;
 import org.deeplearning4j.nn.graph.ComputationGraph;
@@ -15,7 +14,10 @@ import org.nd4j.linalg.lossfunctions.LossFunctions;
 
 /**
  * Reference: http://arxiv.org/pdf/1409.4842v1.pdf
- * Created by nyghtowl on 9/11/15.
+ *
+ * Note this has not been run yet and any help getting this to run is welcome.
+ * There are a couple known issues with CompGraph regarding combining different layer types into one and
+ * combining different shapes of input even if the layer types are the same at least for CNN.
  */
 
 public class GoogleLeNet {
@@ -43,13 +45,17 @@ public class GoogleLeNet {
                 .activation("relu")
                 .optimizationAlgo(OptimizationAlgorithm.STOCHASTIC_GRADIENT_DESCENT)
                 .learningRate(1e-2) // TODO reduce by 4% every 8 epochs - paper is 1e-4
+                .biasLearningRate(2*1e-2)
+                .learningRateDecayPolicy(LearningRatePolicy.Step)
+                .lrPolicyDecayRate(0.96)
+                .lrPolicySteps(320000)
+                .updater(Updater.NESTEROVS)
                 .momentum(0.9)
                 .weightInit(WeightInit.XAVIER)
                 .regularization(true)
                 .l2(2e-4)
                 .graphBuilder()
                 .addInputs("input")
-                // TODO go through and review l2, weight and bias init and add lr and decay for bias?
                 .addLayer("cnn1", new ConvolutionLayer.Builder(new int[]{7, 7}, new int[]{2, 2}, new int[]{3, 3})
                         .nIn(channels)
                         .nOut(64)
@@ -390,6 +396,7 @@ public class GoogleLeNet {
                         .dropOut(0.4)
                         .learningRate(1)
                         .l2(1)
+                        .biasInit(0)
                         .build())
                 .addLayer("output", new OutputLayer.Builder(LossFunctions.LossFunction.NEGATIVELOGLIKELIHOOD)
                         .nOut(outputNum)
@@ -397,9 +404,9 @@ public class GoogleLeNet {
                         .build())
                 .setOutputs("output")
                 .backprop(true).pretrain(false)
-                // TODO get setup working with comp graph
-                .cnnInputSize(height,width,channels).build();
+                .build();
 
+        conf.addPreProcessors(InputType.convolutional(height,width,channels));
 
         ComputationGraph model = new ComputationGraph(conf);
         model.init();
