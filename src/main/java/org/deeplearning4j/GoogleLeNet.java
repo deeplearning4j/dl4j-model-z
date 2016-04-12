@@ -56,6 +56,7 @@ public class GoogleLeNet {
                 .l2(2e-4)
                 .graphBuilder()
                 .addInputs("input")
+                .setInputTypes(InputType.convolutional(height,width,channels))
                 .addLayer("cnn1", new ConvolutionLayer.Builder(new int[]{7, 7}, new int[]{2, 2}, new int[]{3, 3})
                         .nIn(channels)
                         .nOut(64)
@@ -405,8 +406,6 @@ public class GoogleLeNet {
                 .setOutputs("output")
                 .backprop(true).pretrain(false)
                 .build();
-
-        conf.addPreProcessors(InputType.convolutional(height,width,channels));
 
         ComputationGraph model = new ComputationGraph(conf);
         model.init();
