@@ -4,6 +4,7 @@ import org.deeplearning4j.nn.api.OptimizationAlgorithm;
 import org.deeplearning4j.nn.conf.GradientNormalization;
 import org.deeplearning4j.nn.conf.MultiLayerConfiguration;
 import org.deeplearning4j.nn.conf.NeuralNetConfiguration;
+import org.deeplearning4j.nn.conf.Updater;
 import org.deeplearning4j.nn.conf.distribution.UniformDistribution;
 import org.deeplearning4j.nn.conf.layers.DenseLayer;
 import org.deeplearning4j.nn.conf.layers.OutputLayer;
@@ -13,6 +14,8 @@ import org.nd4j.linalg.lossfunctions.LossFunctions;
 
 
 /**
+ * Deep Big Simple NN
+ *
  * Reference: http://arxiv.org/pdf/1003.0358v1.pdf
  */
 public class CMGSNet {
@@ -41,6 +44,7 @@ public class CMGSNet {
                 .optimizationAlgo(OptimizationAlgorithm.STOCHASTIC_GRADIENT_DESCENT)
                 .gradientNormalization(GradientNormalization.RenormalizeL2PerLayer)
                 .learningRate(1e-3f) // TODO create learnable lr that shrinks by multiplicative constant after each epoch pg 3
+                .updater(Updater.NESTEROVS)
                 .momentum(0)
                 .list()
                 .layer(0, new DenseLayer.Builder()

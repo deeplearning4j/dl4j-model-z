@@ -13,9 +13,10 @@ import org.deeplearning4j.nn.weights.WeightInit;
 import org.nd4j.linalg.lossfunctions.LossFunctions;
 
 /**
- * Reference: http://arxiv.org/pdf/1409.4842v1.pdf
+ * GoogleLeNet
+ *  Reference: http://arxiv.org/pdf/1409.4842v1.pdf
  *
- * Note this has not been run yet and any help getting this to run is welcome.
+ * Warning this has not been run yet.
  * There are a couple known issues with CompGraph regarding combining different layer types into one and
  * combining different shapes of input even if the layer types are the same at least for CNN.
  */

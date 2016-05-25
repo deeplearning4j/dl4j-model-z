@@ -15,6 +15,8 @@ import org.deeplearning4j.nn.weights.WeightInit;
 import org.nd4j.linalg.lossfunctions.LossFunctions;
 
 /**
+ * VGGNet
+ *
  * Reference: http://arxiv.org/pdf/1409.1556.pdf
  * http://www.robots.ox.ac.uk/~vgg/research/very_deep/
  * https://gist.github.com/ksimonyan/211839e770f7b538e2d8
@@ -59,7 +61,7 @@ public class VGGNetA {
                 .regularization(true)
                 .l2(5 * 1e-4)
                 .momentum(0.9)
-                .list(16)
+                .list()
                 .layer(0, new ConvolutionLayer.Builder(new int[]{3, 3}, new int[]{1, 1}, new int[]{1, 1})
                         .name("cnn1")
                         .nIn(channels)

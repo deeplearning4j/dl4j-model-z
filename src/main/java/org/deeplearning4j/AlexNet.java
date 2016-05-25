@@ -11,15 +11,16 @@ import org.nd4j.linalg.lossfunctions.LossFunctions;
 
 
 /**
- * References:
- * http://papers.nips.cc/paper/4824-imagenet-classification-with-deep-convolutional-neural-networks.pdf
- * https://github.com/BVLC/caffe/blob/master/models/bvlc_alexnet/train_val.prototxt
+ * AlexNet
  *
  * Dl4j's AlexNet model interpretation based on the original paper ImageNet Classification with Deep Convolutional Neural Networks
  * and the imagenetExample code referenced.
  *
+ * References:
+ * http://papers.nips.cc/paper/4824-imagenet-classification-with-deep-convolutional-neural-networks.pdf
+ * https://github.com/BVLC/caffe/blob/master/models/bvlc_alexnet/train_val.prototxt
+ *
  * Model is built in dl4j based on available functionality and notes indicate where there are gaps waiting for enhancements.
- * Created by nyghtowl on 9/11/15.
  *
  * Bias initialization in the paper is 1 in certain layers but 0.1 in the imagenetExample code
  * Weight distribution uses 0.1 std for all layers in the paper but 0.005 in the dense layers in the imagenetExample code
@@ -35,14 +36,12 @@ public class AlexNet {
     private int iterations = 90;
 
     public AlexNet(int height, int width, int channels, int outputNum, long seed, int iterations) {
-        // TODO consider ways to make this adaptable to other problems not just imagenet
         this.height = height;
         this.width = width;
         this.channels = channels;
         this.outputNum = outputNum;
         this.seed = seed;
         this.iterations = iterations;
-        // TODO batch size set to 128 for ImageNet based on paper - base it on memory bandwidth
     }
 
     public MultiLayerConfiguration conf() {

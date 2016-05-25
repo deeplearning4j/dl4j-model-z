@@ -13,6 +13,8 @@ import org.deeplearning4j.nn.weights.WeightInit;
 import org.nd4j.linalg.lossfunctions.LossFunctions;
 
 /**
+ * LeNet
+ *
  * This model is listed to provide a simpler structure to easily test with.
  * It is not meant to compete with the other options in regards to accuracy.
  *
@@ -48,7 +50,7 @@ public class LeNet {
                 .learningRate(1e-3)
                 .learningRateScoreBasedDecayRate(1e-1)
                 .optimizationAlgo(OptimizationAlgorithm.STOCHASTIC_GRADIENT_DESCENT)
-                .list(7)
+                .list()
                 .layer(0, new ConvolutionLayer.Builder(new int[]{5, 5}, new int[]{1, 1})
                         .name("cnn1")
                         .nIn(channels)
