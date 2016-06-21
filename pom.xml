@@ -13,7 +13,7 @@
 
   <properties>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-    <dl4j.version>0.4-rc3.10</dl4j.version>
+    <dl4j.version>0.4-rc3.11-SNAPSHOT</dl4j.version>
   </properties>
 
 
