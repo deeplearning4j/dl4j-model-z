@@ -11,7 +11,12 @@ import org.deeplearning4j.nn.conf.layers.OutputLayer;
 import org.deeplearning4j.nn.conf.layers.SubsamplingLayer;
 import org.deeplearning4j.nn.multilayer.MultiLayerNetwork;
 import org.deeplearning4j.nn.weights.WeightInit;
+import org.deeplearning4j.util.NetSaverLoaderUtils;
 import org.nd4j.linalg.lossfunctions.LossFunctions;
+
+import javax.validation.constraints.Null;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * VGGNet
@@ -33,14 +38,19 @@ public class VGGNetD {
     private int outputNum = 1000;
     private long seed = 123;
     private int iterations = 370; // 74 epochs - this based on batch of 256
+    private String rootParamPath;
 
-    public VGGNetD(int height, int width, int channels, int outputNum, long seed, int iterations) {
+    // Use following when leveraging trained parameters from VGGA structure in VGGD
+    String[] layerNames = {"cnn1","cnn2","cnn3","ccn4","ffn1","ff2","output"};
+
+    public VGGNetD(int height, int width, int channels, int outputNum, long seed, int iterations, @Null String rootParamPath) {
         this.height = height; // Paper sets size to 224 but this can and should vary - limit to min 100 based on depth & convolutions
         this.width = width; // Paper sets size to 224 but this can and should vary - limit to min 100 based on depth & convolutions
         this.channels = channels; // TODO prepare input to subtract mean RGB value from each pixel
         this.outputNum = outputNum;
         this.seed = seed;
         this.iterations = iterations;
+        this.rootParamPath = rootParamPath;
     }
 
     public MultiLayerConfiguration conf() {
@@ -153,6 +163,10 @@ public class VGGNetD {
     public MultiLayerNetwork init(){
         MultiLayerNetwork model = new MultiLayerNetwork(this.conf());
         model.init();
+        if (rootParamPath != null) {
+            Map<String, String> paramPaths = NetSaverLoaderUtils.getStringParamPaths(rootParamPath, layerNames);
+            NetSaverLoaderUtils.loadParameters(model, layerNames, paramPaths);
+        }
         return model;
     }
 
