@@ -1,6 +1,6 @@
-# Model Zoo
+# Model Configurations
 
-A safe space to observe and interact with existing neural net models!
+This is a little different than a model zoo -- these are properly tuned neural network configurations that will learn well on data!
 
 ---
 
@@ -18,4 +18,4 @@ Existing models include:
 
 ### Conservation
 
-Outside contributions, preservation, and repairs are welcome.
+Outside contributions and repairs are welcome.
