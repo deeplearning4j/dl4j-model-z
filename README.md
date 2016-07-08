@@ -1,6 +1,6 @@
-# Model-Sanctuary
+# Model Zoo
 
-Safe space to observe and interact with existing neural net models.
+A safe space to observe and interact with existing neural net models!
 
 ---
 
