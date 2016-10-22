@@ -2,6 +2,7 @@ package org.deeplearning4j;
 
 import org.deeplearning4j.nn.api.OptimizationAlgorithm;
 import org.deeplearning4j.nn.conf.*;
+import org.deeplearning4j.nn.conf.distribution.Distribution;
 import org.deeplearning4j.nn.conf.distribution.GaussianDistribution;
 import org.deeplearning4j.nn.conf.distribution.NormalDistribution;
 import org.deeplearning4j.nn.conf.layers.*;
@@ -31,26 +32,45 @@ public class AlexNet {
     private int height;
     private int width;
     private int channels = 3;
-    private int outputNum = 1000;
+    private int numLabels = 1000;
     private long seed = 123;
     private int iterations = 90;
 
-    public AlexNet(int height, int width, int channels, int outputNum, long seed, int iterations) {
+    public AlexNet(int height, int width, int channels, int numLabels, long seed, int iterations) {
         this.height = height;
         this.width = width;
         this.channels = channels;
-        this.outputNum = outputNum;
+        this.numLabels = numLabels;
         this.seed = seed;
         this.iterations = iterations;
     }
 
+    private ConvolutionLayer convInit(String name, int in, int out, int[] kernel, int[] stride, int[] pad, double bias) {
+        return new ConvolutionLayer.Builder(kernel, stride, pad).name(name).nIn(in).nOut(out).biasInit(bias).build();
+    }
+
+    private ConvolutionLayer conv3x3(String name, int out, double bias) {
+        return new ConvolutionLayer.Builder(new int[]{3,3}, new int[] {1,1}, new int[] {1,1}).name(name).nOut(out).biasInit(bias).build();
+    }
+
+    private ConvolutionLayer conv5x5(String name, int out, int[] stride, int[] pad, double bias) {
+        return new ConvolutionLayer.Builder(new int[]{5,5}, stride, pad).name(name).nOut(out).biasInit(bias).build();
+    }
+
+    private SubsamplingLayer maxPool(String name,  int[] kernel) {
+        return new SubsamplingLayer.Builder(kernel, new int[]{2,2}).name(name).build();
+    }
+
+    private DenseLayer fullyConnected(String name, int out, double bias, double dropOut, Distribution dist) {
+        return new DenseLayer.Builder().name(name).nOut(out).biasInit(bias).dropOut(dropOut).dist(dist).build();
+    }
+
+
     public MultiLayerConfiguration conf() {
         double nonZeroBias = 1;
         double dropOut = 0.5;
-        SubsamplingLayer.PoolingType poolingType = SubsamplingLayer.PoolingType.MAX;
 
-        // TODO split and link kernel maps on GPUs - 2nd, 4th, 5th convolution should only connect maps on the same gpu, 3rd connects to all in 2nd
-        MultiLayerConfiguration.Builder conf = new NeuralNetConfiguration.Builder()
+        MultiLayerConfiguration conf = new NeuralNetConfiguration.Builder()
                 .seed(seed)
                 .weightInit(WeightInit.DISTRIBUTION)
                 .dist(new NormalDistribution(0.0, 0.01))
@@ -69,70 +89,28 @@ public class AlexNet {
                 .momentum(0.9)
                 .miniBatch(false)
                 .list()
-                .layer(0, new ConvolutionLayer.Builder(new int[]{11, 11}, new int[]{4, 4}, new int[]{3, 3})
-                        .name("cnn1")
-                        .nIn(channels)
-                        .nOut(96)
-                        .build())
-                .layer(1, new LocalResponseNormalization.Builder()
-                        .name("lrn1")
-                        .build())
-                .layer(2, new SubsamplingLayer.Builder(poolingType, new int[]{3, 3}, new int[]{2, 2})
-                        .name("maxpool1")
-                        .build())
-                .layer(3, new ConvolutionLayer.Builder(new int[]{5, 5}, new int[]{1, 1}, new int[]{2, 2})
-                        .name("cnn2")
-                        .nOut(256)
-                        .biasInit(nonZeroBias)
-                        .build())
-                .layer(4, new LocalResponseNormalization.Builder()
-                        .name("lrn2")
-                        .k(2).n(5).alpha(1e-4).beta(0.75)
-                        .build())
-                .layer(5, new SubsamplingLayer.Builder(poolingType, new int[]{3, 3}, new int[]{2, 2})
-                        .name("maxpool2")
-                        .build())
-                .layer(6, new ConvolutionLayer.Builder(new int[]{3, 3}, new int[]{1, 1}, new int[]{1, 1})
-                        .name("cnn3")
-                        .nOut(384)
-                        .build())
-                .layer(7, new ConvolutionLayer.Builder(new int[]{3, 3}, new int[]{1, 1}, new int[]{1, 1})
-                        .name("cnn4")
-                        .nOut(384)
-                        .biasInit(nonZeroBias)
-                        .build())
-                .layer(8, new ConvolutionLayer.Builder(new int[]{3, 3}, new int[]{1, 1}, new int[]{1, 1})
-                        .name("cnn5")
-                        .nOut(256)
-                        .biasInit(nonZeroBias)
-                        .build())
-                .layer(9, new SubsamplingLayer.Builder(poolingType, new int[]{3, 3}, new int[]{2, 2})
-                        .name("maxpool3")
-                        .build())
-                .layer(10, new DenseLayer.Builder()
-                        .name("ffn1")
-                        .nOut(4096)
-                        .dist(new GaussianDistribution(0, 0.005))
-                        .biasInit(nonZeroBias)
-                        .dropOut(dropOut)
-                        .build())
-                .layer(11, new DenseLayer.Builder()
-                        .name("ffn2")
-                        .nOut(4096)
-                        .dist(new GaussianDistribution(0, 0.005))
-                        .biasInit(nonZeroBias)
-                        .dropOut(dropOut)
-                        .build())
+                .layer(0, convInit("cnn1", channels, 96, new int[]{11, 11}, new int[]{4, 4}, new int[]{3, 3}, 0))
+                .layer(1, new LocalResponseNormalization.Builder().name("lrn1").build())
+                .layer(2, maxPool("maxpool1", new int[]{3,3}))
+                .layer(3, conv5x5("cnn2", 256, new int[] {1,1}, new int[] {2,2}, nonZeroBias))
+                .layer(4, new LocalResponseNormalization.Builder().name("lrn2").build())
+                .layer(5, maxPool("maxpool2", new int[]{3,3}))
+                .layer(6,conv3x3("cnn3", 384, 0))
+                .layer(7,conv3x3("cnn4", 384, nonZeroBias))
+                .layer(8,conv3x3("cnn5", 256, nonZeroBias))
+                .layer(9, maxPool("maxpool3", new int[]{3,3}))
+                .layer(10, fullyConnected("ffn1", 4096, nonZeroBias, dropOut, new GaussianDistribution(0, 0.005)))
+                .layer(11, fullyConnected("ffn2", 4096, nonZeroBias, dropOut, new GaussianDistribution(0, 0.005)))
                 .layer(12, new OutputLayer.Builder(LossFunctions.LossFunction.NEGATIVELOGLIKELIHOOD)
                         .name("output")
-                        .nOut(outputNum)
+                        .nOut(numLabels)
                         .activation("softmax")
                         .build())
                 .backprop(true)
                 .pretrain(false)
-                .cnnInputSize(height,width,channels);
+                .cnnInputSize(height,width,channels).build();
 
-        return conf.build();
+        return conf;
     }
 
     public MultiLayerNetwork init(){
