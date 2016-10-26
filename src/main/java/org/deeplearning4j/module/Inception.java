@@ -1,6 +1,6 @@
 package org.deeplearning4j.module;
 
-import org.deeplearning4j.nn.conf.ComputationGraphModule;
+import org.deeplearning4j.nn.conf.module.GraphBuilderModule;
 import org.deeplearning4j.nn.conf.ComputationGraphConfiguration;
 import org.deeplearning4j.nn.conf.graph.MergeVertex;
 import org.deeplearning4j.nn.conf.layers.ConvolutionLayer;
