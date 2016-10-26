@@ -7,11 +7,13 @@ import org.deeplearning4j.nn.conf.layers.DenseLayer;
 import org.deeplearning4j.nn.conf.layers.SubsamplingLayer;
 
 /**
- * Inception is based on GoogleLeNet configuration of convolutional layers for optimization of resources and learning.
+ * Inception is based on GoogleLeNet configuration of convolutional layers for optimization of
+ * resources and learning. You can use this module to add Inception to your own custom models.
  *
  * The GoogleLeNet paper: https://arxiv.org/abs/1409.4842
  *
- * This module is based on the Inception GraphBuilderModule built for Torch and a Scala implementation of GoogleLeNet.
+ * This module is based on the Inception GraphBuilderModule built for Torch and
+ * a Scala implementation of GoogleLeNet.
  * https://github.com/Element-Research/dpnn/blob/master/Inception.lua
  * https://gist.github.com/antikantian/f77e91f924614348ea8f64731437930d
  *
