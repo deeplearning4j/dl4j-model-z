@@ -20,10 +20,9 @@ import org.deeplearning4j.nn.conf.layers.SubsamplingLayer;
  *
  * @author Justin Long (crockpotveggies)
  */
-public static class Inception extends GraphBuilderModule {
+public class Inception implements GraphBuilderModule {
 
-    @Override
-    public static String getModuleName() {
+    public String getModuleName() {
         return "inception";
     }
 
@@ -76,8 +75,7 @@ public static class Inception extends GraphBuilderModule {
      *
      * @return An instance of GraphBuilder with appended inception layers.
      */
-    @Override
-    public static ComputationGraphConfiguration.GraphBuilder updateBuilder(ComputationGraphConfiguration.GraphBuilder graph, String layerName, int inputSize, int[][] config, String inputLayer) {
+    public ComputationGraphConfiguration.GraphBuilder updateBuilder(ComputationGraphConfiguration.GraphBuilder graph, String layerName, int inputSize, int[][] config, String inputLayer) {
         graph
             .addLayer(getModuleName() + "-" + layerName + "-cnn1", conv1x1(inputSize, config[0][0], 0.2), inputLayer)
             .addLayer(getModuleName() + "-" + layerName + "-cnn2", c3x3reduce(inputSize, config[1][0], 0.2), inputLayer)

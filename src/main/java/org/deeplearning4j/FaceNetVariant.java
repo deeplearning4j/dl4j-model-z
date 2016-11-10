@@ -11,6 +11,7 @@ import org.deeplearning4j.nn.conf.graph.StackVertex;
 import org.deeplearning4j.nn.conf.graph.UnstackVertex;
 import org.deeplearning4j.nn.conf.graph.L2Vertex;
 import org.deeplearning4j.nn.conf.layers.*;
+import org.deeplearning4j.nn.conf.module.GraphBuilderModule;
 import org.deeplearning4j.nn.graph.ComputationGraph;
 import org.deeplearning4j.nn.weights.WeightInit;
 import org.nd4j.linalg.lossfunctions.LossFunctions;
@@ -64,6 +65,8 @@ public class FaceNetVariant {
             .l2(2e-4)
             .graphBuilder();
 
+        GraphBuilderModule inception = new Inception();
+
 
         graph
             .addInputs("input1","input2","input3")
@@ -75,29 +78,29 @@ public class FaceNetVariant {
             .addLayer("lrn2", new LocalResponseNormalization.Builder(5, 1e-4, 0.75).build(), "cnn3")
             .addLayer("max2", new SubsamplingLayer.Builder(new int[]{3,3}, new int[]{2,2}, new int[]{0,0}).build(), "lrn2");
 
-        Inception.updateBuilder(graph, "3a", 192, new int[][]{{64},{96, 128},{16, 32}, {32}}, "max2");
-        Inception.updateBuilder(graph, "3b", 256, new int[][]{{128},{128, 192},{32, 96}, {64}}, "3a-depthconcat1");
+        inception.updateBuilder(graph, "3a", 192, new int[][]{{64},{96, 128},{16, 32}, {32}}, "max2");
+        inception.updateBuilder(graph, "3b", 256, new int[][]{{128},{128, 192},{32, 96}, {64}}, "3a-depthconcat1");
 
         graph.addLayer("max3", new SubsamplingLayer.Builder(new int[]{3,3}, new int[]{2,2}, new int[]{0,0}).build(), "3b-depthconcat1");
 
-        Inception.updateBuilder(graph, "4a", 480, new int[][]{{192},{96, 208},{16, 48}, {64}}, "3b-depthconcat1");
-        Inception.updateBuilder(graph, "4b", 512, new int[][]{{160},{112, 224},{24, 64}, {64}}, "4a-depthconcat1");
+        inception.updateBuilder(graph, "4a", 480, new int[][]{{192},{96, 208},{16, 48}, {64}}, "3b-depthconcat1");
+        inception.updateBuilder(graph, "4b", 512, new int[][]{{160},{112, 224},{24, 64}, {64}}, "4a-depthconcat1");
 
-        Inception.updateBuilder(graph, "4c", 512, new int[][]{{128},{128, 256},{24, 64}, {64}}, "4b-depthconcat1");
-        Inception.updateBuilder(graph, "4d", 512, new int[][]{{112},{144, 288},{32, 64}, {64}}, "4c-depthconcat1");
+        inception.updateBuilder(graph, "4c", 512, new int[][]{{128},{128, 256},{24, 64}, {64}}, "4b-depthconcat1");
+        inception.updateBuilder(graph, "4d", 512, new int[][]{{112},{144, 288},{32, 64}, {64}}, "4c-depthconcat1");
 
-        Inception.updateBuilder(graph, "4e", 528, new int[][]{{256},{160, 320},{32, 128}, {128}}, "4d-depthconcat1");
+        inception.updateBuilder(graph, "4e", 528, new int[][]{{256},{160, 320},{32, 128}, {128}}, "4d-depthconcat1");
 
         graph.addLayer("max4", new SubsamplingLayer.Builder(new int[]{3,3}, new int[]{2,2}, new int[]{0,0}).build(), "4e-depthconcat1");
 
-        Inception.updateBuilder(graph, "5a", 832, new int[][]{{256},{160, 320},{32, 128}, {128}}, "max4");
-        Inception.updateBuilder(graph, "5b", 832, new int[][]{{384},{192, 384},{48, 128}, {128}}, "5a-depthconcat1");
+        inception.updateBuilder(graph, "5a", 832, new int[][]{{256},{160, 320},{32, 128}, {128}}, "max4");
+        inception.updateBuilder(graph, "5b", 832, new int[][]{{384},{192, 384},{48, 128}, {128}}, "5a-depthconcat1");
 
         graph.addLayer("avg3", Inception.avgPool7x7(1), "5b-depthconcat1") // output: 1x1x1024
             .addLayer("fc1", Inception.fullyConnected(1024, 1024, 0.4), "avg3") // output: 1x1x1024
-            .addVertex("unstack0", new UnstackVertex(0), "fc1")
-            .addVertex("unstack1", new UnstackVertex(1), "fc1")
-            .addVertex("unstack2", new UnstackVertex(2), "fc1")
+            .addVertex("unstack0", new UnstackVertex(0,3), "fc1")
+            .addVertex("unstack1", new UnstackVertex(1,3), "fc1")
+            .addVertex("unstack2", new UnstackVertex(2,3), "fc1")
             .addVertex("l2-1", new L2Vertex(), "unstack1", "unstack0") // x - x-
             .addVertex("l2-2", new L2Vertex(), "unstack1", "unstack2") // x - x+
             .addLayer("lossLayer", new LossLayer.Builder()
