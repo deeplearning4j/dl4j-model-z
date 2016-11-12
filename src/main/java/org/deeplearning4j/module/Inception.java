@@ -81,10 +81,10 @@ public class Inception implements GraphBuilderModule {
             .addLayer(getModuleName() + "-" + layerName + "-cnn2", c3x3reduce(inputSize, config[1][0], 0.2), inputLayer)
             .addLayer(getModuleName() + "-" + layerName + "-cnn3", c5x5reduce(inputSize, config[2][0], 0.2), inputLayer)
             .addLayer(getModuleName() + "-" + layerName + "-max1", maxPool3x3(1), inputLayer)
-            .addLayer(getModuleName() + "-" + layerName + "-cnn4", conv3x3(config[1][0], config[1][1], 0.2), layerName + "-cnn2")
-            .addLayer(getModuleName() + "-" + layerName + "-cnn5", conv5x5(config[2][0], config[2][1], 0.2), layerName + "-cnn3")
-            .addLayer(getModuleName() + "-" + layerName + "-cnn6", conv1x1(inputSize, config[3][0], 0.2), layerName + "-max1")
-            .addVertex(getModuleName() + "-" + layerName + "-depthconcat1", new MergeVertex(), layerName + "-cnn1", layerName + "-cnn4", layerName + "-cnn5", layerName + "-cnn6");
+            .addLayer(getModuleName() + "-" + layerName + "-cnn4", conv3x3(config[1][0], config[1][1], 0.2), getModuleName() + "-" + layerName + "-cnn2")
+            .addLayer(getModuleName() + "-" + layerName + "-cnn5", conv5x5(config[2][0], config[2][1], 0.2), getModuleName() + "-" + layerName + "-cnn3")
+            .addLayer(getModuleName() + "-" + layerName + "-cnn6", conv1x1(inputSize, config[3][0], 0.2), getModuleName() + "-" + layerName + "-max1")
+            .addVertex(getModuleName() + "-" + layerName + "-depthconcat1", new MergeVertex(), getModuleName() + "-" + layerName + "-cnn1", getModuleName() + "-" + layerName + "-cnn4", getModuleName() + "-" + layerName + "-cnn5", getModuleName() + "-" + layerName + "-cnn6");
         return graph;
     }
 

@@ -74,29 +74,29 @@ public class FaceNetVariant {
             .addLayer("cnn1", Inception.conv7x7(this.channels, 64, 0.2), "stack1")
             .addLayer("max1", new SubsamplingLayer.Builder(new int[]{3,3}, new int[]{2,2}, new int[]{0,0}).build(), "cnn1")
             .addLayer("lrn1", new LocalResponseNormalization.Builder(5, 1e-4, 0.75).build(), "max1")
-            .addLayer("cnn3", Inception.conv3x3(64, 192, 0.2), "cnn2")
-            .addLayer("lrn2", new LocalResponseNormalization.Builder(5, 1e-4, 0.75).build(), "cnn3")
+            .addLayer("cnn2", Inception.conv3x3(64, 192, 0.2), "max1")
+            .addLayer("lrn2", new LocalResponseNormalization.Builder(5, 1e-4, 0.75).build(), "cnn2")
             .addLayer("max2", new SubsamplingLayer.Builder(new int[]{3,3}, new int[]{2,2}, new int[]{0,0}).build(), "lrn2");
 
         inception.updateBuilder(graph, "3a", 192, new int[][]{{64},{96, 128},{16, 32}, {32}}, "max2");
-        inception.updateBuilder(graph, "3b", 256, new int[][]{{128},{128, 192},{32, 96}, {64}}, "3a-depthconcat1");
+        inception.updateBuilder(graph, "3b", 256, new int[][]{{128},{128, 192},{32, 96}, {64}}, "inception-3a-depthconcat1");
 
-        graph.addLayer("max3", new SubsamplingLayer.Builder(new int[]{3,3}, new int[]{2,2}, new int[]{0,0}).build(), "3b-depthconcat1");
+        graph.addLayer("max3", new SubsamplingLayer.Builder(new int[]{3,3}, new int[]{2,2}, new int[]{0,0}).build(), "inception-3b-depthconcat1");
 
-        inception.updateBuilder(graph, "4a", 480, new int[][]{{192},{96, 208},{16, 48}, {64}}, "3b-depthconcat1");
-        inception.updateBuilder(graph, "4b", 512, new int[][]{{160},{112, 224},{24, 64}, {64}}, "4a-depthconcat1");
+        inception.updateBuilder(graph, "4a", 480, new int[][]{{192},{96, 208},{16, 48}, {64}}, "inception-3b-depthconcat1");
+        inception.updateBuilder(graph, "4b", 512, new int[][]{{160},{112, 224},{24, 64}, {64}}, "inception-4a-depthconcat1");
 
-        inception.updateBuilder(graph, "4c", 512, new int[][]{{128},{128, 256},{24, 64}, {64}}, "4b-depthconcat1");
-        inception.updateBuilder(graph, "4d", 512, new int[][]{{112},{144, 288},{32, 64}, {64}}, "4c-depthconcat1");
+        inception.updateBuilder(graph, "4c", 512, new int[][]{{128},{128, 256},{24, 64}, {64}}, "inception-4b-depthconcat1");
+        inception.updateBuilder(graph, "4d", 512, new int[][]{{112},{144, 288},{32, 64}, {64}}, "inception-4c-depthconcat1");
 
-        inception.updateBuilder(graph, "4e", 528, new int[][]{{256},{160, 320},{32, 128}, {128}}, "4d-depthconcat1");
+        inception.updateBuilder(graph, "4e", 528, new int[][]{{256},{160, 320},{32, 128}, {128}}, "inception-4d-depthconcat1");
 
-        graph.addLayer("max4", new SubsamplingLayer.Builder(new int[]{3,3}, new int[]{2,2}, new int[]{0,0}).build(), "4e-depthconcat1");
+        graph.addLayer("max4", new SubsamplingLayer.Builder(new int[]{3,3}, new int[]{2,2}, new int[]{0,0}).build(), "inception-4e-depthconcat1");
 
         inception.updateBuilder(graph, "5a", 832, new int[][]{{256},{160, 320},{32, 128}, {128}}, "max4");
-        inception.updateBuilder(graph, "5b", 832, new int[][]{{384},{192, 384},{48, 128}, {128}}, "5a-depthconcat1");
+        inception.updateBuilder(graph, "5b", 832, new int[][]{{384},{192, 384},{48, 128}, {128}}, "inception-5a-depthconcat1");
 
-        graph.addLayer("avg3", Inception.avgPool7x7(1), "5b-depthconcat1") // output: 1x1x1024
+        graph.addLayer("avg3", Inception.avgPool7x7(1), "inception-5b-depthconcat1") // output: 1x1x1024
             .addLayer("fc1", Inception.fullyConnected(1024, 1024, 0.4), "avg3") // output: 1x1x1024
             .addVertex("unstack0", new UnstackVertex(0,3), "fc1")
             .addVertex("unstack1", new UnstackVertex(1,3), "fc1")

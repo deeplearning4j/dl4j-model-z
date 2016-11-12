@@ -13,9 +13,6 @@ import org.deeplearning4j.nn.multilayer.MultiLayerNetwork;
 import org.deeplearning4j.nn.weights.WeightInit;
 import org.deeplearning4j.util.NetSaverLoaderUtils;
 import org.nd4j.linalg.lossfunctions.LossFunctions;
-
-import javax.validation.constraints.Null;
-import java.util.HashMap;
 import java.util.Map;
 
 /**
@@ -43,7 +40,7 @@ public class VGGNetD {
     // Use following when leveraging trained parameters from VGGA structure in VGGD
     String[] layerNames = {"cnn1","cnn2","cnn3","ccn4","ffn1","ff2","output"};
 
-    public VGGNetD(int height, int width, int channels, int outputNum, long seed, int iterations, @Null String rootParamPath) {
+    public VGGNetD(int height, int width, int channels, int outputNum, long seed, int iterations, String rootParamPath) {
         this.height = height; // Paper sets size to 224 but this can and should vary - limit to min 100 based on depth & convolutions
         this.width = width; // Paper sets size to 224 but this can and should vary - limit to min 100 based on depth & convolutions
         this.channels = channels; // TODO prepare input to subtract mean RGB value from each pixel
