@@ -58,7 +58,7 @@ public class FaceNetVariant {
             .learningRateDecayPolicy(LearningRatePolicy.Step)
             .lrPolicyDecayRate(0.96)
             .lrPolicySteps(320000)
-            .updater(Updater.NESTEROVS)
+            .updater(Updater.ADAM)
             .momentum(0.9)
             .weightInit(WeightInit.XAVIER)
             .regularization(true)
