@@ -3,15 +3,16 @@ package org.deeplearning4j;
 import org.deeplearning4j.module.Inception;
 import org.deeplearning4j.nn.api.OptimizationAlgorithm;
 import org.deeplearning4j.nn.conf.ComputationGraphConfiguration;
-import org.deeplearning4j.nn.conf.ComputationGraphConfiguration.GraphBuilder;
 import org.deeplearning4j.nn.conf.LearningRatePolicy;
 import org.deeplearning4j.nn.conf.NeuralNetConfiguration;
 import org.deeplearning4j.nn.conf.Updater;
+import org.deeplearning4j.nn.conf.graph.L2Vertex;
 import org.deeplearning4j.nn.conf.graph.StackVertex;
 import org.deeplearning4j.nn.conf.graph.UnstackVertex;
-import org.deeplearning4j.nn.conf.graph.L2Vertex;
-import org.deeplearning4j.nn.conf.layers.*;
-import org.deeplearning4j.nn.conf.module.GraphBuilderModule;
+import org.deeplearning4j.nn.conf.layers.BatchNormalization;
+import org.deeplearning4j.nn.conf.layers.LocalResponseNormalization;
+import org.deeplearning4j.nn.conf.layers.LossLayer;
+import org.deeplearning4j.nn.conf.layers.SubsamplingLayer;
 import org.deeplearning4j.nn.graph.ComputationGraph;
 import org.deeplearning4j.nn.weights.WeightInit;
 import org.nd4j.linalg.lossfunctions.LossFunctions;
@@ -48,7 +49,7 @@ public class FaceNetVariant {
 
     public ComputationGraph init() {
 
-        GraphBuilder graph = new NeuralNetConfiguration.Builder()
+        ComputationGraphConfiguration.GraphBuilder graph = new NeuralNetConfiguration.Builder()
             .seed(seed)
             .iterations(iterations)
             .activation("relu")
@@ -59,48 +60,67 @@ public class FaceNetVariant {
             .lrPolicyDecayRate(0.96)
             .lrPolicySteps(320000)
             .updater(Updater.ADAM)
-            .momentum(0.9)
+//        .momentum(0.9)
+            .adamVarDecay(0.999)
+            .adamMeanDecay(0.9)
             .weightInit(WeightInit.XAVIER)
             .regularization(true)
             .l2(2e-4)
             .graphBuilder();
-
-        GraphBuilderModule inception = new Inception();
 
 
         graph
             .addInputs("input1","input2","input3")
             .addVertex("stack1", new StackVertex(), "input1","input2","input3")
             .addLayer("cnn1", Inception.conv7x7(this.channels, 64, 0.2), "stack1")
-            .addLayer("max1", new SubsamplingLayer.Builder(new int[]{3,3}, new int[]{2,2}, new int[]{0,0}).build(), "cnn1")
-            .addLayer("lrn1", new LocalResponseNormalization.Builder(5, 1e-4, 0.75).build(), "max1")
-            .addLayer("cnn2", Inception.conv3x3(64, 192, 0.2), "max1")
-            .addLayer("lrn2", new LocalResponseNormalization.Builder(5, 1e-4, 0.75).build(), "cnn2")
-            .addLayer("max2", new SubsamplingLayer.Builder(new int[]{3,3}, new int[]{2,2}, new int[]{0,0}).build(), "lrn2");
+            .addLayer("batch1", new BatchNormalization.Builder(1e-4, 0.75).nIn(64).nOut(64).build(), "cnn1")
+            .addLayer("pool1", new SubsamplingLayer.Builder(SubsamplingLayer.PoolingType.MAX, new int[]{3,3}, new int[]{2,2}, new int[]{1,1}).build(), "batch1")
+            .addLayer("lrn1", new LocalResponseNormalization.Builder(5, 1e-4, 0.75).build(), "pool1")
 
-        inception.updateBuilder(graph, "3a", 192, new int[][]{{64},{96, 128},{16, 32}, {32}}, "max2");
-        inception.updateBuilder(graph, "3b", 256, new int[][]{{128},{128, 192},{32, 96}, {64}}, "inception-3a-depthconcat1");
+            // Inception 2
+            .addLayer("inception-2-cnn1", Inception.conv1x1(64, 64, 0.2), "lrn1")
+            .addLayer("inception-2-batch1", new BatchNormalization.Builder(false).nIn(64).nOut(64).build(), "inception-2-cnn1")
+            .addLayer("inception-2-cnn2", Inception.conv3x3(64, 192, 0.2), "inception-2-batch1")
+            .addLayer("inception-2-batch2", new BatchNormalization.Builder(false).nIn(192).nOut(192).build(), "inception-2-cnn2")
+            .addLayer("inception-2-lrn1", new LocalResponseNormalization.Builder(5, 1e-4, 0.75).build(), "inception-2-batch2")
+            .addLayer("inception-2-pool1", new SubsamplingLayer.Builder(SubsamplingLayer.PoolingType.MAX, new int[]{3,3}, new int[]{2,2}, new int[]{1,1}).build(), "inception-2-lrn1");
 
-        graph.addLayer("max3", new SubsamplingLayer.Builder(new int[]{3,3}, new int[]{2,2}, new int[]{0,0}).build(), "inception-3b-depthconcat1");
+        // Inception 3a
+        Inception.appendGraph(graph, "3a", 192,
+            new int[]{3,5}, new int[]{1,1}, new int[]{128,32}, new int[]{96,16,32,64},
+            SubsamplingLayer.PoolingType.MAX, true, "inception-2-pool1");
+        // Inception 3b
+        Inception.appendGraph(graph, "3b", 256,
+            new int[]{3,5}, new int[]{1,1}, new int[]{128,64}, new int[]{96,32,64,64},
+            SubsamplingLayer.PoolingType.MAX, true, "inception-3a"); // TODO: needs to be p norm pooling
+        // Inception 3c
+        Inception.appendGraph(graph, "3c", 320,
+            new int[]{3,5}, new int[]{2,2}, new int[]{256,64}, new int[]{128,32},
+            SubsamplingLayer.PoolingType.MAX, 2, 1, true, "inception-3b");
 
-        inception.updateBuilder(graph, "4a", 480, new int[][]{{192},{96, 208},{16, 48}, {64}}, "inception-3b-depthconcat1");
-        inception.updateBuilder(graph, "4b", 512, new int[][]{{160},{112, 224},{24, 64}, {64}}, "inception-4a-depthconcat1");
+        // Inception 4a
+        Inception.appendGraph(graph, "4a", 640,
+            new int[]{3,5}, new int[]{1,1}, new int[]{192,64}, new int[]{96,32,128,256},
+            SubsamplingLayer.PoolingType.MAX, true, "inception-3b"); // TODO: needs to be p norm pooling
+        // Inception 4e
+        Inception.appendGraph(graph, "4e", 640,
+            new int[]{3,5}, new int[]{2,2}, new int[]{256,128}, new int[]{160,64},
+            SubsamplingLayer.PoolingType.MAX, 2, 1, true, "inception-4a");
 
-        inception.updateBuilder(graph, "4c", 512, new int[][]{{128},{128, 256},{24, 64}, {64}}, "inception-4b-depthconcat1");
-        inception.updateBuilder(graph, "4d", 512, new int[][]{{112},{144, 288},{32, 64}, {64}}, "inception-4c-depthconcat1");
+        // Inception 5a
+        Inception.appendGraph(graph, "5a", 1024,
+            new int[]{3}, new int[]{1}, new int[]{384}, new int[]{96,96,256},
+            SubsamplingLayer.PoolingType.MAX, true, "inception-4e"); // TODO: needs to be p norm pooling
+        // Inception 5b
+        Inception.appendGraph(graph, "5b", 736,
+            new int[]{3}, new int[]{1}, new int[]{384}, new int[]{96,96,256},
+            SubsamplingLayer.PoolingType.MAX, 1, 1, true, "inception-5a");
 
-        inception.updateBuilder(graph, "4e", 528, new int[][]{{256},{160, 320},{32, 128}, {128}}, "inception-4d-depthconcat1");
-
-        graph.addLayer("max4", new SubsamplingLayer.Builder(new int[]{3,3}, new int[]{2,2}, new int[]{0,0}).build(), "inception-4e-depthconcat1");
-
-        inception.updateBuilder(graph, "5a", 832, new int[][]{{256},{160, 320},{32, 128}, {128}}, "max4");
-        inception.updateBuilder(graph, "5b", 832, new int[][]{{384},{192, 384},{48, 128}, {128}}, "inception-5a-depthconcat1");
-
-        graph.addLayer("avg3", Inception.avgPool7x7(1), "inception-5b-depthconcat1") // output: 1x1x1024
-            .addLayer("fc1", Inception.fullyConnected(1024, 1024, 0.4), "avg3") // output: 1x1x1024
-            .addVertex("unstack0", new UnstackVertex(0,3), "fc1")
-            .addVertex("unstack1", new UnstackVertex(1,3), "fc1")
-            .addVertex("unstack2", new UnstackVertex(2,3), "fc1")
+        graph
+            .addLayer("avg3", Inception.avgPoolNxN(3,3), "inception-5b") // output: 1x1x1024
+            .addVertex("unstack0", new UnstackVertex(0,3), "avg3")
+            .addVertex("unstack1", new UnstackVertex(1,3), "avg3")
+            .addVertex("unstack2", new UnstackVertex(2,3), "avg3")
             .addVertex("l2-1", new L2Vertex(), "unstack1", "unstack0") // x - x-
             .addVertex("l2-2", new L2Vertex(), "unstack1", "unstack2") // x - x+
             .addLayer("lossLayer", new LossLayer.Builder()
@@ -121,3 +141,4 @@ public class FaceNetVariant {
 
 
 }
+
