@@ -73,8 +73,9 @@ public class Inception {
         return new DenseLayer.Builder().nIn(in).nOut(out).dropOut(dropOut).build();
     }
 
-    public static ConvolutionLayer convNxN(int reduceSize, int outputSize, int kernelSize, int kernelStride) {
-        return new ConvolutionLayer.Builder(new int[]{kernelSize,kernelSize}, new int[]{kernelStride,kernelStride}, new int[]{2,2}).nIn(reduceSize).nOut(outputSize).biasInit(0.2).build();
+    public static ConvolutionLayer convNxN(int reduceSize, int outputSize, int kernelSize, int kernelStride, boolean padding) {
+        int pad = padding ? ((int) Math.floor(kernelStride/2)*2) : 0;
+        return new ConvolutionLayer.Builder(new int[]{kernelSize,kernelSize}, new int[]{kernelStride,kernelStride}, new int[]{pad,pad}).nIn(reduceSize).nOut(outputSize).biasInit(0.2).build();
     }
 
     public static ConvolutionLayer convNxNreduce(int inputSize, int reduceSize, int reduceStride) {
@@ -82,7 +83,7 @@ public class Inception {
     }
 
     public static BatchNormalization batchNorm(int in, int out) {
-        return new BatchNormalization.Builder(false).nIn(in).nOut(in).activation("relu").build();
+        return new BatchNormalization.Builder(false).nIn(in).nOut(out).activation("relu").build();
     }
 
     public static ComputationGraphConfiguration.GraphBuilder appendGraph(ComputationGraphConfiguration.GraphBuilder graph,
@@ -116,39 +117,36 @@ public class Inception {
         for(int i=0; i<kernelSize.length; i++) {
             graph.addLayer(getModuleName(moduleLayerName)+"-cnn1-"+i, conv1x1(inputSize, reduceSize[i], 0.2), inputLayer);
             if(batchNorm) graph.addLayer(getModuleName(moduleLayerName)+"-batch1-"+i, batchNorm(reduceSize[i],reduceSize[i]), getModuleName(moduleLayerName)+"-cnn1-"+i);
-            graph.addLayer(getModuleName(moduleLayerName)+"-reduce1-"+i, convNxN(reduceSize[i],outputSize[i],kernelSize[i],kernelStride[i]), batchNorm ? getModuleName(moduleLayerName)+"-batch1-"+i : getModuleName(moduleLayerName)+"-cnn1-"+i);
+            graph.addLayer(getModuleName(moduleLayerName)+"-reduce1-"+i, convNxN(reduceSize[i],outputSize[i],kernelSize[i],kernelStride[i],true), batchNorm ? getModuleName(moduleLayerName)+"-batch1-"+i : getModuleName(moduleLayerName)+"-cnn1-"+i);
             if(batchNorm) graph.addLayer(getModuleName(moduleLayerName)+"-batch2-"+i, batchNorm(outputSize[i],outputSize[i]), getModuleName(moduleLayerName)+"-reduce1-"+i);
         }
 
         // pool -> 1x1 conv
-        switch(poolingType) {
-            case AVG:
-                graph.addLayer(getModuleName(moduleLayerName)+"-pool1", avgPoolNxN(poolSize,poolStride), inputLayer);
-                break;
-            case MAX:
-                graph.addLayer(getModuleName(moduleLayerName)+"-pool1", maxPoolNxN(poolSize,poolStride), inputLayer);
-                break;
-            default:
-                throw new IllegalStateException("You must specify a valid pooling type of avg or max for Inception module.");
-        }
         int i = kernelSize.length;
         try {
+            int checkIndex = reduceSize[i];
+            switch(poolingType) {
+                case AVG:
+                    graph.addLayer(getModuleName(moduleLayerName)+"-pool1", avgPoolNxN(poolSize,poolStride), inputLayer);
+                    break;
+                case MAX:
+                    graph.addLayer(getModuleName(moduleLayerName)+"-pool1", maxPoolNxN(poolSize,poolStride), inputLayer);
+                    break;
+                default:
+                    throw new IllegalStateException("You must specify a valid pooling type of avg or max for Inception module.");
+            }
             graph.addLayer(getModuleName(moduleLayerName)+"-cnn2", convNxNreduce(inputSize,reduceSize[i],1), getModuleName(moduleLayerName)+"-pool1");
             if(batchNorm) graph.addLayer(getModuleName(moduleLayerName)+"-batch3", batchNorm(reduceSize[i],reduceSize[i]), getModuleName(moduleLayerName)+"-cnn2");
         }
-        catch(IndexOutOfBoundsException e) {
-            System.out.print(e.getStackTrace());
-        }
+        catch(IndexOutOfBoundsException e) {}
         i++;
 
         // reduce
         try {
-            graph.addLayer(getModuleName(moduleLayerName)+"-reduce2", convNxNreduce(inputSize,reduceSize[i],1), getModuleName(moduleLayerName)+"-pool1");
+            graph.addLayer(getModuleName(moduleLayerName)+"-reduce2", convNxNreduce(inputSize,reduceSize[i],1), inputLayer);
             if(batchNorm) graph.addLayer(getModuleName(moduleLayerName)+"-batch4", batchNorm(reduceSize[i],reduceSize[i]), getModuleName(moduleLayerName)+"-reduce2");
         }
-        catch(IndexOutOfBoundsException e) {
-            System.out.print(e);
-        }
+        catch(IndexOutOfBoundsException e) {}
 
         // TODO: there's a better way to do this
         if(kernelSize.length==1 && reduceSize.length==3) {
@@ -166,6 +164,15 @@ public class Inception {
                 new MergeVertex(),
                 batchNorm ? getModuleName(moduleLayerName) + "-batch2-0" : getModuleName(moduleLayerName) + "-reduce1-0",
                 batchNorm ? getModuleName(moduleLayerName) + "-batch2-1" : getModuleName(moduleLayerName) + "-reduce1-1"
+            );
+        }
+        else if(kernelSize.length==2 && reduceSize.length==3) {
+            graph.addVertex(
+                getModuleName(moduleLayerName),
+                new MergeVertex(),
+                batchNorm ? getModuleName(moduleLayerName) + "-batch2-0" : getModuleName(moduleLayerName) + "-reduce1-0",
+                batchNorm ? getModuleName(moduleLayerName) + "-batch2-1" : getModuleName(moduleLayerName) + "-reduce1-1",
+                batchNorm ? getModuleName(moduleLayerName) + "-batch3" : getModuleName(moduleLayerName) + "-cnn2"
             );
         }
         else if(kernelSize.length==2 && reduceSize.length==4) {
