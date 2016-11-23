@@ -34,31 +34,26 @@ public class FaceNetVariant {
     private int channels = 3;
     //  private int outputNum = 1000;
     private long seed = 123;
-    private int iterations = 90;
-    private int batchSize = 1;
+    private int iterations = 1;
     private boolean miniBatch = true;
     private double learningRate = 0.001;
     private String activation = "relu";
     private WeightInit weightInit = WeightInit.RELU;
-    private double epsilon = Double.NaN;
 
     private double adamVarDecay = 0.999;
     private double adamMeanDecay = 0.9;
 
-    public FaceNetVariant(int height, int width, int channels, long seed, int iterations, int batchSize, boolean miniBatch,
-                          double learningRate, String activation, WeightInit weightInit, double epsilon) {
+    public FaceNetVariant(int height, int width, int channels, long seed, int iterations, boolean miniBatch,
+                          double learningRate, String activation, WeightInit weightInit) {
         this.height = height;
         this.width = width;
         this.channels = channels;
-//    this.outputNum = outputNum;
         this.seed = seed;
         this.iterations = iterations;
-        this.batchSize = batchSize;
         this.miniBatch = miniBatch;
         this.learningRate = learningRate;
         this.activation = activation;
         this.weightInit = weightInit;
-        this.epsilon = epsilon;
     }
 
     public ComputationGraph init() {
@@ -72,7 +67,6 @@ public class FaceNetVariant {
             .updater(Updater.ADAM)
             .adamVarDecay(adamVarDecay)
             .adamMeanDecay(adamMeanDecay)
-            .epsilon(epsilon)
             .weightInit(weightInit)
             .regularization(false)
 //        .l1(0.01)
