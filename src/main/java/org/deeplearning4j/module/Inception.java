@@ -61,6 +61,10 @@ public class Inception {
         return new SubsamplingLayer.Builder(SubsamplingLayer.PoolingType.AVG, new int[]{size,size}, new int[]{stride,stride}).build();
     }
 
+    public static SubsamplingLayer pNormNxN(int pNorm, int size, int stride) {
+        return new SubsamplingLayer.Builder(SubsamplingLayer.PoolingType.PNORM, new int[]{size,size}, new int[]{stride,stride}).pnorm(pNorm).build();
+    }
+
     public static SubsamplingLayer maxPool3x3(int stride) {
         return new SubsamplingLayer.Builder(new int[]{3,3}, new int[]{stride,stride}, new int[]{1,1}).build();
     }
@@ -89,7 +93,19 @@ public class Inception {
     public static ComputationGraphConfiguration.GraphBuilder appendGraph(ComputationGraphConfiguration.GraphBuilder graph,
                                                                          String moduleLayerName, int inputSize, int[] kernelSize, int[] kernelStride, int[] outputSize, int[] reduceSize,
                                                                          SubsamplingLayer.PoolingType poolingType, boolean batchNorm, String inputLayer) {
-        return appendGraph(graph,moduleLayerName,inputSize,kernelSize,kernelStride,outputSize,reduceSize,poolingType,3,1,batchNorm,inputLayer);
+        return appendGraph(graph,moduleLayerName,inputSize,kernelSize,kernelStride,outputSize,reduceSize,poolingType,0,3,1,batchNorm,inputLayer);
+    }
+
+    public static ComputationGraphConfiguration.GraphBuilder appendGraph(ComputationGraphConfiguration.GraphBuilder graph,
+                                                                         String moduleLayerName, int inputSize, int[] kernelSize, int[] kernelStride, int[] outputSize, int[] reduceSize,
+                                                                         SubsamplingLayer.PoolingType poolingType, int pNorm, boolean batchNorm, String inputLayer) {
+        return appendGraph(graph,moduleLayerName,inputSize,kernelSize,kernelStride,outputSize,reduceSize,poolingType,pNorm,3,1,batchNorm,inputLayer);
+    }
+
+    public static ComputationGraphConfiguration.GraphBuilder appendGraph(ComputationGraphConfiguration.GraphBuilder graph,
+                                                                         String moduleLayerName, int inputSize, int[] kernelSize, int[] kernelStride, int[] outputSize, int[] reduceSize,
+                                                                         SubsamplingLayer.PoolingType poolingType, int poolSize, int poolStride, boolean batchNorm, String inputLayer) {
+        return appendGraph(graph,moduleLayerName,inputSize,kernelSize,kernelStride,outputSize,reduceSize,poolingType,0,poolSize,poolStride,batchNorm,inputLayer);
     }
 
     /**
@@ -112,7 +128,7 @@ public class Inception {
      */
     public static ComputationGraphConfiguration.GraphBuilder appendGraph(ComputationGraphConfiguration.GraphBuilder graph,
                                                                          String moduleLayerName, int inputSize, int[] kernelSize, int[] kernelStride, int[] outputSize, int[] reduceSize,
-                                                                         SubsamplingLayer.PoolingType poolingType, int poolSize, int poolStride, boolean batchNorm, String inputLayer) {
+                                                                         SubsamplingLayer.PoolingType poolingType, int pNorm, int poolSize, int poolStride, boolean batchNorm, String inputLayer) {
         // 1x1 reduce -> nxn conv
         for(int i=0; i<kernelSize.length; i++) {
             graph.addLayer(getModuleName(moduleLayerName)+"-cnn1-"+i, conv1x1(inputSize, reduceSize[i], 0.2), inputLayer);
@@ -131,6 +147,10 @@ public class Inception {
                     break;
                 case MAX:
                     graph.addLayer(getModuleName(moduleLayerName)+"-pool1", maxPoolNxN(poolSize,poolStride), inputLayer);
+                    break;
+                case PNORM:
+                    if(pNorm <= 0) throw new IllegalArgumentException("p-norm must be greater than zero.");
+                    graph.addLayer(getModuleName(moduleLayerName)+"-pool1", pNormNxN(pNorm,poolSize,poolStride), inputLayer);
                     break;
                 default:
                     throw new IllegalStateException("You must specify a valid pooling type of avg or max for Inception module.");

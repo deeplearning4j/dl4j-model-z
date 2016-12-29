@@ -11,10 +11,7 @@ import org.deeplearning4j.nn.conf.graph.L2Vertex;
 import org.deeplearning4j.nn.conf.graph.StackVertex;
 import org.deeplearning4j.nn.conf.graph.UnstackVertex;
 import org.deeplearning4j.nn.conf.inputs.InputType;
-import org.deeplearning4j.nn.conf.layers.BatchNormalization;
-import org.deeplearning4j.nn.conf.layers.LocalResponseNormalization;
-import org.deeplearning4j.nn.conf.layers.LossLayer;
-import org.deeplearning4j.nn.conf.layers.SubsamplingLayer;
+import org.deeplearning4j.nn.conf.layers.*;
 import org.deeplearning4j.nn.graph.ComputationGraph;
 import org.deeplearning4j.nn.weights.WeightInit;
 import org.nd4j.linalg.lossfunctions.LossFunctions;
@@ -107,19 +104,15 @@ public class FaceNetVariant {
         // Inception 3b
         Inception.appendGraph(graph, "3b", 256,
             new int[]{3,5}, new int[]{1,1}, new int[]{128,64}, new int[]{96,32,64,64},
-            SubsamplingLayer.PoolingType.MAX, true, "inception-3a"); // TODO: needs to be p norm pooling
-        // Inception 3c
+            SubsamplingLayer.PoolingType.PNORM, 2, true, "inception-3a");
         Inception.appendGraph(graph, "3c", 320,
-            new int[]{3,5}, new int[]{1,1}, new int[]{128,64}, new int[]{96,32,64,64},
-            SubsamplingLayer.PoolingType.MAX, true, "inception-3b"); // TODO: needs to be p norm pooling
-//        Inception.appendGraph(graph, "3c", 320,
-//            new int[]{3,5}, new int[]{2,2}, new int[]{256,64}, new int[]{128,32},
-//            SubsamplingLayer.PoolingType.MAX, 2, 1, true, "inception-3b");
+            new int[]{3,5}, new int[]{2,2}, new int[]{256,64}, new int[]{128,32},
+            SubsamplingLayer.PoolingType.MAX, true, "inception-3b");
 
         // Inception 4a
         Inception.appendGraph(graph, "4a", 320,
             new int[]{3,5}, new int[]{1,1}, new int[]{192,64}, new int[]{96,32,128,256},
-            SubsamplingLayer.PoolingType.MAX, true, "inception-3c"); // TODO: needs to be p norm pooling
+            SubsamplingLayer.PoolingType.PNORM, 2, true, "inception-3c");
         // Inception 4e
         Inception.appendGraph(graph, "4e", 640,
             new int[]{3,5}, new int[]{2,2}, new int[]{256,128}, new int[]{160,64},
@@ -128,7 +121,7 @@ public class FaceNetVariant {
         // Inception 5a
         Inception.appendGraph(graph, "5a", 384,
             new int[]{3}, new int[]{1}, new int[]{384}, new int[]{96,96,256},
-            SubsamplingLayer.PoolingType.MAX, true, "inception-4e"); // TODO: needs to be p norm pooling
+            SubsamplingLayer.PoolingType.PNORM, 2, true, "inception-4e");
         // Inception 5b
         Inception.appendGraph(graph, "5b", 736,
             new int[]{3}, new int[]{1}, new int[]{384}, new int[]{96,96,256},
@@ -136,15 +129,15 @@ public class FaceNetVariant {
 
         graph
             .addLayer("avg3", Inception.avgPoolNxN(3,3), "inception-5b") // output: 1x1x1024
-//        .addLayer("lin1", new ActivationLayer().s)
-            .addVertex("unstack0", new UnstackVertex(0,3), "avg3")
-            .addVertex("unstack1", new UnstackVertex(1,3), "avg3")
-            .addVertex("unstack2", new UnstackVertex(2,3), "avg3")
+            .addLayer("embed1", new DenseLayer.Builder().nIn(736).nOut(128).activation("identity").build(), "avg3")
+            .addVertex("unstack0", new UnstackVertex(0,3), "embed1")
+            .addVertex("unstack1", new UnstackVertex(1,3), "embed1")
+            .addVertex("unstack2", new UnstackVertex(2,3), "embed1")
             .addVertex("l2-1", new L2Vertex(), "unstack1", "unstack0") // x - x-
             .addVertex("l2-2", new L2Vertex(), "unstack1", "unstack2") // x - x+
             .addLayer("lossLayer", new LossLayer.Builder()
                 .lossFunction(LossFunctions.LossFunction.NEGATIVELOGLIKELIHOOD)
-                .activation("softmax")
+                .activation(Activation.SOFTMAX)
                 .build(), "l2-1", "l2-2")
             .setOutputs("lossLayer")
             .backprop(true).pretrain(false);
