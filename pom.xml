@@ -13,7 +13,7 @@
 
   <properties>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-    <dl4j.version>0.7.0</dl4j.version>
+    <dl4j.version>0.7.2</dl4j.version>
     <maven-shade-plugin.version>2.4.3</maven-shade-plugin.version>
     <exec-maven-plugin.version>1.4.0</exec-maven-plugin.version>
 
@@ -21,18 +21,18 @@
 
 
   <dependencies>
-    <dependency>
-      <groupId>org.deeplearning4j</groupId>
-      <artifactId>deeplearning4j-ui</artifactId>
-      <version>${dl4j.version}</version>
-      <!-- <scope>provided</scope> to reduce jar file size when not doing learning -->
-      <exclusions>
-        <exclusion>
-          <groupId>org.slf4j</groupId>
-          <artifactId>slf4j-log4j12</artifactId>
-        </exclusion>
-      </exclusions>
-    </dependency>
+    <!--<dependency>-->
+      <!--<groupId>org.deeplearning4j</groupId>-->
+      <!--<artifactId>deeplearning4j-ui</artifactId>-->
+      <!--<version>${dl4j.version}</version>-->
+      <!--&lt;!&ndash; <scope>provided</scope> to reduce jar file size when not doing learning &ndash;&gt;-->
+      <!--<exclusions>-->
+        <!--<exclusion>-->
+          <!--<groupId>org.slf4j</groupId>-->
+          <!--<artifactId>slf4j-log4j12</artifactId>-->
+        <!--</exclusion>-->
+      <!--</exclusions>-->
+    <!--</dependency>-->
     <dependency>
       <groupId>org.deeplearning4j</groupId>
       <artifactId>deeplearning4j-core</artifactId>
