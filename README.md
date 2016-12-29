@@ -20,6 +20,7 @@ Existing model configurations include:
 - OverFeat (in progress on a branch)
 - DeepBigSimpleNet
 - DeepFace
+- FaceNetVariant
 
 ---
 
