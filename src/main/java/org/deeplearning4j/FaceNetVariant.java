@@ -82,7 +82,7 @@ public class FaceNetVariant {
             .setInputTypes(InputType.convolutional(height, width, channels),InputType.convolutional(height, width, channels),InputType.convolutional(height, width, channels))
             .addVertex("stack1", new StackVertex(), "input1","input2","input3")
             .addLayer("cnn1", Inception.conv7x7(this.channels, 64, 0.2), "stack1")
-            .addLayer("batch1", new BatchNormalization.Builder(1e-4, 0.75).nIn(64).nOut(64).build(), "cnn1")
+            .addLayer("batch1", new BatchNormalization.Builder(false).nIn(64).nOut(64).build(), "cnn1")
 
             // pool -> norm
             .addLayer("pool1", new SubsamplingLayer.Builder(SubsamplingLayer.PoolingType.MAX, new int[]{3,3}, new int[]{2,2}, new int[]{1,1}).build(), "batch1")
