@@ -139,13 +139,13 @@ public class InceptionResNetV1 {
             // 3x3 pool
             .addLayer("reduceB-pool1", new SubsamplingLayer.Builder(SubsamplingLayer.PoolingType.MAX, new int[]{3,3}, new int[]{2,2}).build(), "resnetB")
             // 1x1 -> 3x3
-            .addLayer("reduceB-cnn2", new ConvolutionLayer.Builder(new int[]{1,1}).convolutionMode(ConvolutionMode.Same).nIn(896).nOut(256).build(), "resnetB")
+            .addLayer("reduceB-cnn2", new ConvolutionLayer.Builder(new int[]{1,1}).convolutionMode(ConvolutionMode.Same).nIn(640).nOut(256).build(), "resnetB")
             .addLayer("reduceB-cnn3", new ConvolutionLayer.Builder(new int[]{3,3}, new int[]{2,2}).nIn(256).nOut(256).build(), "reduceB-cnn2")
             // 1x1 -> 3x3
-            .addLayer("reduceB-cnn4", new ConvolutionLayer.Builder(new int[]{1,1}).convolutionMode(ConvolutionMode.Same).nIn(896).nOut(256).build(), "resnetB")
+            .addLayer("reduceB-cnn4", new ConvolutionLayer.Builder(new int[]{1,1}).convolutionMode(ConvolutionMode.Same).nIn(640).nOut(256).build(), "resnetB")
             .addLayer("reduceB-cnn5", new ConvolutionLayer.Builder(new int[]{3,3}, new int[]{2,2}).nIn(256).nOut(256).build(), "reduceB-cnn4")
             // 1x1 -> 3x3 -> 3x3
-            .addLayer("reduceB-cnn6", new ConvolutionLayer.Builder(new int[]{1,1}).convolutionMode(ConvolutionMode.Same).nIn(896).nOut(256).build(), "resnetB")
+            .addLayer("reduceB-cnn6", new ConvolutionLayer.Builder(new int[]{1,1}).convolutionMode(ConvolutionMode.Same).nIn(640).nOut(256).build(), "resnetB")
             .addLayer("reduceB-cnn7", new ConvolutionLayer.Builder(new int[]{3,3}).convolutionMode(ConvolutionMode.Same).nIn(256).nOut(256).build(), "reduceB-cnn6")
             .addLayer("reduceB-cnn8", new ConvolutionLayer.Builder(new int[]{3,3}, new int[]{2,2}).nIn(256).nOut(256).build(), "reduceB-cnn7")
             // -->

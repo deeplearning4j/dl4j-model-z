@@ -41,17 +41,17 @@ public class InceptionResNet {
         for(int i=1; i<=scale; i++) {
             graph
                 // 1x1
-                .addLayer(nameLayer(blockName,"cnn1",i), new ConvolutionLayer.Builder(new int[]{1, 1}).convolutionMode(ConvolutionMode.Same).nIn(192).nOut(32).build(), previousBlock)
+                .addLayer(nameLayer(blockName,"cnn1",i), new ConvolutionLayer.Builder(new int[]{1, 1}).convolutionMode(ConvolutionMode.Same).nIn(256).nOut(32).build(), previousBlock)
                 // 1x1 -> 3x3
-                .addLayer(nameLayer(blockName,"cnn2",i), new ConvolutionLayer.Builder(new int[]{1, 1}).convolutionMode(ConvolutionMode.Same).nIn(192).nOut(32).build(), previousBlock)
+                .addLayer(nameLayer(blockName,"cnn2",i), new ConvolutionLayer.Builder(new int[]{1, 1}).convolutionMode(ConvolutionMode.Same).nIn(256).nOut(32).build(), previousBlock)
                 .addLayer(nameLayer(blockName,"cnn3",i), new ConvolutionLayer.Builder(new int[]{3, 3}).convolutionMode(ConvolutionMode.Same).nIn(32).nOut(32).build(), nameLayer(blockName,"cnn2",i))
                 // 1x1 -> 3x3 -> 3x3
-                .addLayer(nameLayer(blockName,"cnn4",i), new ConvolutionLayer.Builder(new int[]{1, 1}).convolutionMode(ConvolutionMode.Same).nIn(192).nOut(32).build(), previousBlock)
+                .addLayer(nameLayer(blockName,"cnn4",i), new ConvolutionLayer.Builder(new int[]{1, 1}).convolutionMode(ConvolutionMode.Same).nIn(256).nOut(32).build(), previousBlock)
                 .addLayer(nameLayer(blockName,"cnn5",i), new ConvolutionLayer.Builder(new int[]{3, 3}).convolutionMode(ConvolutionMode.Same).nIn(32).nOut(32).build(), nameLayer(blockName,"cnn4",i))
                 .addLayer(nameLayer(blockName,"cnn6",i), new ConvolutionLayer.Builder(new int[]{3, 3}).convolutionMode(ConvolutionMode.Same).nIn(32).nOut(32).build(), nameLayer(blockName,"cnn5",i))
                 // --> 1x1 -->
                 .addVertex(nameLayer(blockName,"merge1",i), new MergeVertex(), nameLayer(blockName,"cnn1",i), nameLayer(blockName,"cnn3",i), nameLayer(blockName,"cnn6",i))
-                .addLayer(nameLayer(blockName,"cnn7",i), new ConvolutionLayer.Builder(new int[]{3, 3}).convolutionMode(ConvolutionMode.Same).nIn(32).nOut(256).build(), nameLayer(blockName,"merge1",i))
+                .addLayer(nameLayer(blockName,"cnn7",i), new ConvolutionLayer.Builder(new int[]{3, 3}).convolutionMode(ConvolutionMode.Same).nIn(96).nOut(256).build(), nameLayer(blockName,"merge1",i))
                 // -->
                 .addLayer(nameLayer(blockName,"shortcut-identity",i), new ActivationLayer.Builder().activation(Activation.IDENTITY).build(), previousBlock)
                 .addVertex(nameLayer(blockName,"shortcut",i), new ElementWiseVertex(ElementWiseVertex.Op.Add), nameLayer(blockName,"cnn7",i), nameLayer(blockName,"shortcut-identity",i));
@@ -80,14 +80,14 @@ public class InceptionResNet {
         for(int i=1; i<=scale; i++) {
             graph
                 // 1x1
-                .addLayer(nameLayer(blockName,"cnn1",i), new ConvolutionLayer.Builder(new int[]{1,1}).convolutionMode(ConvolutionMode.Same).nIn(896).nOut(128).build(), previousBlock)
+                .addLayer(nameLayer(blockName,"cnn1",i), new ConvolutionLayer.Builder(new int[]{1,1}).convolutionMode(ConvolutionMode.Same).nIn(640).nOut(128).build(), previousBlock)
                 // 1x1 -> 3x3 -> 3x3
-                .addLayer(nameLayer(blockName,"cnn2",i), new ConvolutionLayer.Builder(new int[]{1,1}).convolutionMode(ConvolutionMode.Same).nIn(896).nOut(128).build(), previousBlock)
+                .addLayer(nameLayer(blockName,"cnn2",i), new ConvolutionLayer.Builder(new int[]{1,1}).convolutionMode(ConvolutionMode.Same).nIn(640).nOut(128).build(), previousBlock)
                 .addLayer(nameLayer(blockName,"cnn3",i), new ConvolutionLayer.Builder(new int[]{1,7}).convolutionMode(ConvolutionMode.Same).nIn(128).nOut(128).build(), nameLayer(blockName,"cnn2",i))
                 .addLayer(nameLayer(blockName,"cnn4",i), new ConvolutionLayer.Builder(new int[]{7,1}).convolutionMode(ConvolutionMode.Same).nIn(128).nOut(128).build(), nameLayer(blockName,"cnn3",i))
                 // --> 1x1 -->
                 .addVertex(nameLayer(blockName,"merge1",i), new MergeVertex(), nameLayer(blockName,"cnn1",i), nameLayer(blockName,"cnn4",i))
-                .addLayer(nameLayer(blockName,"cnn5",i), new ConvolutionLayer.Builder(new int[]{1,1}).convolutionMode(ConvolutionMode.Same).nIn(128).nOut(640).build(), previousBlock)
+                .addLayer(nameLayer(blockName,"cnn5",i), new ConvolutionLayer.Builder(new int[]{1,1}).convolutionMode(ConvolutionMode.Same).nIn(640).nOut(640).build(), previousBlock)
                 // -->
                 .addLayer(nameLayer(blockName,"shortcut-identity",i), new ActivationLayer.Builder().activation(Activation.IDENTITY).build(), previousBlock)
                 .addVertex(nameLayer(blockName,"shortcut",i), new ElementWiseVertex(ElementWiseVertex.Op.Add), nameLayer(blockName,"cnn5",i), nameLayer(blockName,"shortcut-identity",i));
@@ -116,14 +116,14 @@ public class InceptionResNet {
         for(int i=1; i<=scale; i++) {
             graph
                 // 1x1
-                .addLayer(nameLayer(blockName,"cnn1",i), new ConvolutionLayer.Builder(new int[]{1,1}).convolutionMode(ConvolutionMode.Same).nIn(1792).nOut(192).build(), previousBlock)
+                .addLayer(nameLayer(blockName,"cnn1",i), new ConvolutionLayer.Builder(new int[]{1,1}).convolutionMode(ConvolutionMode.Same).nIn(1408).nOut(192).build(), previousBlock)
                 // 1x1 -> 1x3 -> 3x1
-                .addLayer(nameLayer(blockName,"cnn2",i), new ConvolutionLayer.Builder(new int[]{1,1}).convolutionMode(ConvolutionMode.Same).nIn(1792).nOut(192).build(), previousBlock)
+                .addLayer(nameLayer(blockName,"cnn2",i), new ConvolutionLayer.Builder(new int[]{1,1}).convolutionMode(ConvolutionMode.Same).nIn(1408).nOut(192).build(), previousBlock)
                 .addLayer(nameLayer(blockName,"cnn3",i), new ConvolutionLayer.Builder(new int[]{1,3}).convolutionMode(ConvolutionMode.Same).nIn(192).nOut(192).build(), nameLayer(blockName,"cnn2",i))
                 .addLayer(nameLayer(blockName,"cnn4",i), new ConvolutionLayer.Builder(new int[]{3,1}).convolutionMode(ConvolutionMode.Same).nIn(192).nOut(192).build(), nameLayer(blockName,"cnn3",i))
                 // --> 1x1 -->
                 .addVertex(nameLayer(blockName,"merge1",i), new MergeVertex(), nameLayer(blockName,"cnn1",i), nameLayer(blockName,"cnn4",i))
-                .addLayer(nameLayer(blockName,"cnn5",i), new ConvolutionLayer.Builder(new int[]{1,1}).convolutionMode(ConvolutionMode.Same).nIn(192).nOut(1408).build(), previousBlock)
+                .addLayer(nameLayer(blockName,"cnn5",i), new ConvolutionLayer.Builder(new int[]{1,1}).convolutionMode(ConvolutionMode.Same).nIn(1408).nOut(1408).build(), previousBlock)
                 // -->
                 .addLayer(nameLayer(blockName,"shortcut-identity",i), new ActivationLayer.Builder().activation(Activation.IDENTITY).build(), previousBlock)
                 .addVertex(nameLayer(blockName,"shortcut",i), new ElementWiseVertex(ElementWiseVertex.Op.Add), nameLayer(blockName,"cnn5",i), nameLayer(blockName,"shortcut-identity",i));
