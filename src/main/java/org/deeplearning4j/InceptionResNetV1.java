@@ -90,8 +90,7 @@ public class InceptionResNetV1 {
             .adamVarDecay(adamVarDecay)
             .adamMeanDecay(adamMeanDecay)
             .epsilon(epsilon)
-            .weightInit(WeightInit.DISTRIBUTION)
-            .dist(new NormalDistribution(0.0, 0.1))
+            .weightInit(WeightInit.XAVIER)
             .regularization(true)
             .l2(2e-4)
             .dropOut(0.8)
@@ -107,7 +106,7 @@ public class InceptionResNetV1 {
             .addLayer("stem-cnn2", new ConvolutionLayer.Builder(new int[]{3,3}).nIn(32).nOut(32).build(), "stem-cnn1")
             .addLayer("stem-cnn3", new ConvolutionLayer.Builder(new int[]{3,3}).convolutionMode(ConvolutionMode.Same).nIn(32).nOut(64).build(), "stem-cnn2")
             .addLayer("stem-pool4", new SubsamplingLayer.Builder(SubsamplingLayer.PoolingType.MAX, new int[]{3,3}, new int[]{2,2}).build(), "stem-cnn3")
-            .addLayer("stem-cnn5", new ConvolutionLayer.Builder(new int[]{1,1}).convolutionMode(ConvolutionMode.Same).nIn(64).nOut(80).build(), "stem-pool4")
+            .addLayer("stem-cnn5", new ConvolutionLayer.Builder(new int[]{1,1}).nIn(64).nOut(80).build(), "stem-pool4")
             .addLayer("stem-cnn6", new ConvolutionLayer.Builder(new int[]{3,3}).nIn(80).nOut(192).build(), "stem-cnn5")
             .addLayer("stem-cnn7", new ConvolutionLayer.Builder(new int[]{3,3}, new int[]{2,2}).nIn(192).nOut(256).build(), "stem-cnn6");
 
@@ -119,7 +118,7 @@ public class InceptionResNetV1 {
         // Reduction-A
         graph
             // 3x3
-            .addLayer("reduceA-cnn1", new ConvolutionLayer.Builder(new int[]{3,3}, new int[]{2,2}).nIn(256).nOut(384).build(), "resnetA")
+            .addLayer("reduceA-cnn1", new ConvolutionLayer.Builder(new int[]{3,3}, new int[]{2,2}).nIn(256).nOut(256).build(), "resnetA")
             // 1x1 -> 3x3 -> 3x3
             .addLayer("reduceA-cnn2", new ConvolutionLayer.Builder(new int[]{1,1}).convolutionMode(ConvolutionMode.Same).nIn(256).nOut(192).build(), "resnetA")
             .addLayer("reduceA-cnn3", new ConvolutionLayer.Builder(new int[]{3,3}).convolutionMode(ConvolutionMode.Same).nIn(192).nOut(192).build(), "reduceA-cnn2")
@@ -127,7 +126,7 @@ public class InceptionResNetV1 {
             // maxpool
             .addLayer("reduceA-pool5", new SubsamplingLayer.Builder(SubsamplingLayer.PoolingType.MAX, new int[]{3,3}, new int[]{2,2}).build(), "resnetA")
             // -->
-            .addVertex("reduceA", new MergeVertex(), "reduceA-cnn1","reduceA-pool5");
+            .addVertex("reduceA", new MergeVertex(), "reduceA-cnn1", "reduceA-cnn4", "reduceA-pool5");
 
 
         // 10xInception-resnet-B
@@ -139,13 +138,13 @@ public class InceptionResNetV1 {
             // 3x3 pool
             .addLayer("reduceB-pool1", new SubsamplingLayer.Builder(SubsamplingLayer.PoolingType.MAX, new int[]{3,3}, new int[]{2,2}).build(), "resnetB")
             // 1x1 -> 3x3
-            .addLayer("reduceB-cnn2", new ConvolutionLayer.Builder(new int[]{1,1}).convolutionMode(ConvolutionMode.Same).nIn(640).nOut(256).build(), "resnetB")
+            .addLayer("reduceB-cnn2", new ConvolutionLayer.Builder(new int[]{1,1}).convolutionMode(ConvolutionMode.Same).nIn(768).nOut(256).build(), "resnetB")
             .addLayer("reduceB-cnn3", new ConvolutionLayer.Builder(new int[]{3,3}, new int[]{2,2}).nIn(256).nOut(256).build(), "reduceB-cnn2")
             // 1x1 -> 3x3
-            .addLayer("reduceB-cnn4", new ConvolutionLayer.Builder(new int[]{1,1}).convolutionMode(ConvolutionMode.Same).nIn(640).nOut(256).build(), "resnetB")
+            .addLayer("reduceB-cnn4", new ConvolutionLayer.Builder(new int[]{1,1}).convolutionMode(ConvolutionMode.Same).nIn(768).nOut(256).build(), "resnetB")
             .addLayer("reduceB-cnn5", new ConvolutionLayer.Builder(new int[]{3,3}, new int[]{2,2}).nIn(256).nOut(256).build(), "reduceB-cnn4")
             // 1x1 -> 3x3 -> 3x3
-            .addLayer("reduceB-cnn6", new ConvolutionLayer.Builder(new int[]{1,1}).convolutionMode(ConvolutionMode.Same).nIn(640).nOut(256).build(), "resnetB")
+            .addLayer("reduceB-cnn6", new ConvolutionLayer.Builder(new int[]{1,1}).convolutionMode(ConvolutionMode.Same).nIn(768).nOut(256).build(), "resnetB")
             .addLayer("reduceB-cnn7", new ConvolutionLayer.Builder(new int[]{3,3}).convolutionMode(ConvolutionMode.Same).nIn(256).nOut(256).build(), "reduceB-cnn6")
             .addLayer("reduceB-cnn8", new ConvolutionLayer.Builder(new int[]{3,3}, new int[]{2,2}).nIn(256).nOut(256).build(), "reduceB-cnn7")
             // -->
@@ -159,7 +158,7 @@ public class InceptionResNetV1 {
         graph.addLayer("averagepool1", new SubsamplingLayer.Builder(SubsamplingLayer.PoolingType.AVG, new int[]{3,3}).build(), "resnetC");
 
         // Embeddings
-        graph.addLayer("embeddings", new DenseLayer.Builder().nIn(1408).nOut(embeddingSize).activation(Activation.IDENTITY).build(), "averagepool1");
+        graph.addLayer("embeddings", new DenseLayer.Builder().nIn(1536).nOut(embeddingSize).activation(Activation.IDENTITY).build(), "averagepool1");
 
         return graph;
     }
