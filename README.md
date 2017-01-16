@@ -5,7 +5,7 @@
 [![Javadoc](https://javadoc-emblem.rhcloud.com/doc/org.deeplearning4j/deeplearning4j-core/badge.svg)](http://deeplearning4j.org/doc)
 
 
-DL4J's version of Caffe Model Zoo. Repo to store dl4j versions of standard model configurations and trained models.
+Deeplearning4j's version of Caffe Model Zoo. Repo to store dl4j versions of standard model configurations and trained models.
 
 ---
 
